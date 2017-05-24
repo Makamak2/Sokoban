@@ -1,0 +1,20 @@
+The game should be based on a 2D grid (an array?) , where one tile is one thing ( wall, player, ... ).
+The player can't move on a tile with a wall.
+The player can go to one where a 'box' ( the object, which is supposed to be moved to a designated area ) is, by which he moves the box in the direction of movement.
+The player can't move more than one box at a time.
+
+In the end, there should be multiple levels in different files, the option to choose from levels already reached, the option to save and exit the game and being able to continue from the spot, where one stopped, ... ! fill !
+
+I will start by creating one simple functional level.
+  The main function should mostly consist of other functions, that each do one part and are interchangeable with functions doing the same thing
+    It should consist of function that:
+        - Prepares the 'board' ( what we see when playing the game ) based on parameters I set
+        - Prints the board
+        - Checks the movement of the player
+        - Moves the box in case player moves there
+        - Checks if all boxes 'are set' ( are on the desinated spot )
+        - Moves the player
+        - ...
+
+I can then expand this.
+        
