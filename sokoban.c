@@ -35,66 +35,59 @@ void remove_stack( element** a );
 // End of definitions
 
 
-// The start of function 'prepare_level()', which sets the elements in the array to walls, goals, boxes and the player.
-void prepare_level1()
+// The start of function 'prepare_level()', which sets the elements in the array to walls, goals, boxes and the player according to the text file determined by user input in 'main()'.
+void prepare_level( char level[666] )
 {
-	for( int col = 0; col <= WIDTH; col++ )
+	
+	char level_directory[66] = "./levels/";  
+
+	int toot = 0;
+
+	while( level[toot] != 0 )
 	{
-		for( int row = 0; row <= HEIGHT; row++ )
-		{
-			array[col][row][1] = '0';
-			array[col][row][0] = SPACE;
-		}
+		level_directory[toot+9] = level[toot];
+		toot++;
 	}
-	col_player = 4;
-	row_player = 4;
 
-	array[4][3][0] = WALL;
-	array[3][4][0] = WALL;
-	array[2][5][0] = WALL;
-	array[2][6][0] = WALL;
-	array[2][7][0] = WALL;
-	array[3][8][0] = WALL;
+	if(fopen( level_directory, "r" ) == NULL)
+	{
+		printf("ERROR: That is not an existing level\n");
+		exit(1);
+	}
+	else
+	{	
 
-	array[5][2][0] = WALL;
-	array[6][2][0] = WALL;
-	array[7][2][0] = WALL;
-	array[8][2][0] = WALL;
-	array[9][2][0] = WALL;
-	array[10][2][0] = WALL;
-	array[11][2][0] = WALL;
-	array[12][2][0] = WALL;
+		FILE *file;
+		file = fopen( level_directory, "r" );
+		
+		int a = 0;
+		int b = 0;
+		char character = 0;
 
-	array[13][3][0] = WALL;
-	array[13][4][0] = WALL;
-	array[13][5][0] = WALL;
-	array[13][6][0] = WALL;
-	array[13][7][0] = WALL;
-	array[13][8][0] = WALL;
-
-	array[12][9][0] = WALL;
-	array[11][9][0] = WALL;
-	array[10][9][0] = WALL;
-
-	array[9][8][0] = WALL;
-	array[8][8][0] = WALL;
-	array[7][8][0] = WALL;
-	array[6][8][0] = WALL;
-	array[5][8][0] = WALL;
-	array[4][8][0] = WALL;
-
-	array[8][3][0] = WALL;
-	array[8][4][0] = WALL;
-
-	array[12][5][0] = WALL;
-
-	array[11][4][0] = GOAL;
-	array[10][3][0] = GOAL;	
-	array[10][8][0] = GOAL;
-
-	array[7][4][1] = BOX;
-	array[8][5][1] = BOX;
-	array[9][4][1] = BOX;
+		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
+		{
+			if(character == '\n')
+			{
+				a=0;
+				b++;
+				continue;
+			}
+			array[a][b][0] = character;
+			a++;         
+		}
+		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
+		{
+			if(character == '\n')
+			{
+				a=0;
+				b++;
+				continue;
+			}
+			array[a][b][1] = character;
+			a++;         
+		}		
+		fclose( file );
+	}	
 }
 // The end of function 'prepare_level'.
 
@@ -237,7 +230,20 @@ bool move_player( int coordinate_x, int coordinate_y )
 // The start of main().
 int main()
 {
-	prepare_level1();
+	char level[666];
+
+	for( int i=0; i<66; i++)
+	{
+		level[i] = 0;
+	}
+
+	scanf("%s", level);
+
+	prepare_level( level );
+
+
+	printf("heya3");
+
 	print_board();
 
 	while( 1 )
