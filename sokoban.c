@@ -1,7 +1,13 @@
+// Macros used for debugging
+#define DEBUG_BUILD 1 // Change to 0 to not debug, to other to do a debug
+#define DEBUG if( DEBUG_BUILD )
+// End of debug macros
+
 // Inclusion of used libraries and headers
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h> // For the usage of boolean data type.
+#include <unistd.h> // Using for the usleep command
 #include "stack.h"
 // End of inclusion
 
@@ -34,12 +40,11 @@ void pop( element** a );
 void remove_stack( element** a );
 // End of definitions
 
-
 // The start of function 'prepare_level()', which sets the elements in the array to walls, goals, boxes and the player according to the text file determined by user input in 'main()'.
 void prepare_level( char level[666] )
 {
 	
-	char level_directory[66] = "./levels/";  
+	char level_directory[66] = "./levels/";
 
 	int toot = 0;
 
@@ -60,33 +65,46 @@ void prepare_level( char level[666] )
 		FILE *file;
 		file = fopen( level_directory, "r" );
 		
-		int a = 0;
-		int b = 0;
+		int col = 0;
+		int row = 0;
 		char character = 0;
 
 		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
 		{
 			if(character == '\n')
 			{
-				a=0;
-				b++;
+				col=0;
+				row++;
 				continue;
 			}
-			array[a][b][0] = character;
-			a++;         
+			array[col][row][0] = character;
+			col++;         
 		}
+
+		col = 0;
+		row = 0;
+		character = fgetc(file);
+
 		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
 		{
 			if(character == '\n')
 			{
-				a=0;
-				b++;
+				col=0;
+				row++;
 				continue;
 			}
-			array[a][b][1] = character;
-			a++;         
+			array[col][row][1] = character;
+			col++;         
 		}		
 		fclose( file );
+	}
+	
+	DEBUG 
+	{
+		system( "printf \"\033c\"" );
+		printf("\nThis is a DEBUG build!\n\n");
+		printf("\nSuccesfully prepared level.\n\n");
+		usleep( 2000000 );
 	}	
 }
 // The end of function 'prepare_level'.
@@ -95,24 +113,29 @@ void prepare_level( char level[666] )
 void print_board()
 {
  system( "printf \"\033c\"" );	 // a cheat to clear the console
+	
+	DEBUG printf("\nThis is a DEBUG build!\n\n");
+
 	for( int row = 0; row < WIDTH; row++ )
 	{
    	for( int col = 0; col < HEIGHT; col++ )
       {
       	if( col == col_player && row == row_player ) printf("%c", PLAYER);
       	else if( array[col][row][1] != '0' )
-			{
+	 		{
 				printf("%c", array[col][row][1]);
+	//				printf("\nChar: %c\n", array[col][row][1]);
 			}
 			else		
 			{
 				printf("%c", array[col][row][0]);
-			}
-      }
+			}	
+      }	
     printf("\n");
    }
 	printf("\ncol_player: %d, row_player: %d\n", col_player, row_player);
-	printf("\nChar on [7,4]: %c\n", array[7][4][1]);
+//	printf("\nChar on [0,0,0]: %c\n", array[0][0][1]);
+	DEBUG printf("\nSuccesfully printed the board.\n\n");	
 }
 // The end of function 'print_board()'.
 
@@ -241,10 +264,10 @@ int main()
 
 	prepare_level( level );
 
+			col_player = 4;
+			row_player = 4;
 
-	printf("heya3");
-
-	print_board();
+	print_board();			
 
 	while( 1 )
 	{
