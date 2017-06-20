@@ -1,5 +1,5 @@
 // Macros used for debugging
-#define DEBUG_BUILD 1 // Change to 0 to not debug, to other to do a debug
+#define DEBUG_BUILD 0 // Change to 0 to not debug, to a different number to do a debug build
 #define DEBUG if( DEBUG_BUILD )
 // End of debug macros
 
@@ -12,8 +12,8 @@
 // End of inclusion
 
 // Changeable definition of the height and the width of the board ( is used as parameters when declaring the array )
-#define HEIGHT 20
 #define WIDTH 20
+#define HEIGHT 20
 // End of definitions.
 
 // Definition of characters for tiles.
@@ -25,12 +25,13 @@
 // End of definitons.
 
 // The declaration of an array used for the board and col_player and row_player variables, which represent the position of the player.
-char array[WIDTH][HEIGHT][2];
-	// array[][][0] is for the non-changeble tiles - WALL, SPACE and GOAL -> there will always be either space or goal under a box or the player; array[][][1] is for boxes.
+char* array;
+
 int col_player;
 int row_player;
 // The end of the declaration.
 
+/*
 // Defining functions from header "stack.h"
 void init( element** a );
 int is_empty( element* a );
@@ -38,7 +39,15 @@ void push( element** a, int b );
 int top( element* a );
 void pop( element** a );
 void remove_stack( element** a );
-// End of definitions
+// End of definitions 
+*/
+
+//	The start of function 'offset()', which counts the offset used when changing the character in memory by adding it's output to the value of the 'array' pointer
+int offset( int coordinate_x, int coordinate_y, int layer )
+{
+	return ( layer * WIDTH * HEIGHT + coordinate_y * WIDTH + coordinate_x);
+}
+//
 
 // The start of function 'prepare_level()', which sets the elements in the array to walls, goals, boxes and the player according to the text file determined by user input in 'main()'.
 void prepare_level( char level[666] )
@@ -57,6 +66,7 @@ void prepare_level( char level[666] )
 	if(fopen( level_directory, "r" ) == NULL)
 	{
 		printf("ERROR: That is not an existing level\n");
+		free(array);
 		exit(1);
 	}
 	else
@@ -77,7 +87,7 @@ void prepare_level( char level[666] )
 				row++;
 				continue;
 			}
-			array[col][row][0] = character;
+			*( array + offset(col, row, 0) ) = character;
 			col++;         
 		}
 
@@ -93,7 +103,7 @@ void prepare_level( char level[666] )
 				row++;
 				continue;
 			}
-			array[col][row][1] = character;
+			*( array + offset(col, row, 1) ) = character;
 			col++;         
 		}		
 		fclose( file );
@@ -104,7 +114,7 @@ void prepare_level( char level[666] )
 		system( "printf \"\033c\"" );
 		printf("\nThis is a DEBUG build!\n\n");
 		printf("\nSuccesfully prepared level.\n\n");
-		usleep( 2000000 );
+		usleep( 1500000 );
 	}	
 }
 // The end of function 'prepare_level'.
@@ -121,20 +131,20 @@ void print_board()
    	for( int col = 0; col < HEIGHT; col++ )
       {
       	if( col == col_player && row == row_player ) printf("%c", PLAYER);
-      	else if( array[col][row][1] != '0' )
+      	else if( *(array + offset(col, row, 1) ) != '0' )
 	 		{
-				printf("%c", array[col][row][1]);
-	//				printf("\nChar: %c\n", array[col][row][1]);
+				printf("%c", *(array + offset(col, row, 1)));
+	//				printf("\nChar: %c\n", *(array + offset(col, row, 1));
 			}
 			else		
 			{
-				printf("%c", array[col][row][0]);
+				printf("%c", *(array + offset(col, row, 0)));
 			}	
       }	
     printf("\n");
    }
 	printf("\ncol_player: %d, row_player: %d\n", col_player, row_player);
-//	printf("\nChar on [0,0,0]: %c\n", array[0][0][1]);
+//	printf("\nChar on [0,0,0]: %c\n", *(array + offset(0, 0, 0));
 	DEBUG printf("\nSuccesfully printed the board.\n\n");	
 }
 // The end of function 'print_board()'.
@@ -149,7 +159,7 @@ void check_goals()
 	{
    	for( int col = 0; col < HEIGHT; col++ )
       {
-			if( array[col][row][0] == GOAL && array[col][row][1] == BOX )
+			if( *(array + offset(col, row, 0)) == GOAL && *(array + offset(col, row, 1)) == BOX )
 			{
 				on_goal++;
 			}
@@ -157,6 +167,7 @@ void check_goals()
 			{	
 				system( "printf \"\033c\"" );
 				printf("Well played!\n\n");
+				free(array);
 				exit( 0 );
 			}
 		}
@@ -169,64 +180,64 @@ bool box_movement( int coordinate_x, int coordinate_y )
 {
 	if( coordinate_x == col_player && coordinate_y == row_player+1 ) // Player is above the box
 	{
-		if( array[coordinate_x][coordinate_y+1][1] == BOX || array[coordinate_x][coordinate_y+1][0] == WALL )
+		if( *(array + offset(coordinate_x, coordinate_y+1, 1)) == BOX || *(array + offset(coordinate_x, coordinate_y+1, 0)) == WALL )
 		{
 			return false;
 		}
-		array[coordinate_x][coordinate_y+1][1] = BOX;
-		array[coordinate_x][coordinate_y][1] = '0';
+		*(array + offset(coordinate_x, coordinate_y+1, 1)) = BOX;
+		*(array + offset(coordinate_x, coordinate_y, 1)) = '0';
 		return true;
 	}
 
 	if( coordinate_x == col_player && coordinate_y == row_player-1 ) // Player is beneath the box
 	{
-		if( array[coordinate_x][coordinate_y-1][1] == BOX || array[coordinate_x][coordinate_y-1][0] == WALL )
+		if( *(array + offset(coordinate_x, coordinate_y-1, 1)) == BOX || *(array + offset(coordinate_x, coordinate_y-1, 0)) == WALL )
 		{
 			return false;
 		}
-		array[coordinate_x][coordinate_y-1][1] = BOX;
-		array[coordinate_x][coordinate_y][1] = '0';
+		*(array + offset(coordinate_x, coordinate_y-1, 1)) = BOX;
+		*(array + offset(coordinate_x, coordinate_y, 1)) = '0';
 		return true;
 	}
 
 	if( coordinate_x == col_player+1 && coordinate_y == row_player )	// Player is to the left of the box
 	{
-		if( array[coordinate_x+1][coordinate_y][1] == BOX || array[coordinate_x+1][coordinate_y][0] == WALL )
+		if( *(array + offset(coordinate_x+1, coordinate_y, 1)) == BOX || *(array + offset(coordinate_x+1, coordinate_y, 0)) == WALL )
 		{
 			return false;
 		}
-		array[coordinate_x+1][coordinate_y][1] = BOX;
-		array[coordinate_x][coordinate_y][1] = '0';
+		*(array + offset(coordinate_x+1, coordinate_y, 1)) = BOX;
+		*(array + offset(coordinate_x, coordinate_y, 1)) = '0';
 		return true;
 	}
 
 	if( coordinate_x == col_player-1 && coordinate_y == row_player )	// Player is to the right of the box
 	{
-		if( array[coordinate_x-1][coordinate_y][1] == BOX || array[coordinate_x-1][coordinate_y][0] == WALL )
+		if( *(array + offset(coordinate_x-1, coordinate_y, 1)) == BOX || *(array + offset(coordinate_x-1, coordinate_y, 0)) == WALL )
 		{
 			return false;
 		}
-		array[coordinate_x-1][coordinate_y][1] = BOX;
-		array[coordinate_x][coordinate_y][1] = '0';
+		*(array + offset(coordinate_x-1, coordinate_y, 1)) = BOX;
+		*(array + offset(coordinate_x, coordinate_y, 1)) = '0';
 		return true;
 	}
 	
 	system( "printf \"\033c\"" );
 	printf("\nERROR\n");
+	free(array);
 	exit( 1 );
-
 }
 // End of function 'box_movement'.
 
 // The start of function 'check_player_step(), which checks the tile where the player wants to move.
 bool check_player_step( int coordinate_x, int coordinate_y )
 {
-	if( array[coordinate_x][coordinate_y][0] == WALL  || coordinate_x > ( WIDTH-1 ) || coordinate_x < 0 || coordinate_y > ( HEIGHT-1 ) || coordinate_y < 0 )
+	if( *(array + offset(coordinate_x, coordinate_y, 0)) == WALL  || coordinate_x > ( WIDTH-1 ) || coordinate_x < 0 || coordinate_y > ( HEIGHT-1 ) || coordinate_y < 0 )
 	{
 		return false;
 	}
 
-	if( array[coordinate_x][coordinate_y][1] == BOX )
+	if( *(array + offset(coordinate_x, coordinate_y, 1)) == BOX )
 	{
 		return box_movement( coordinate_x, coordinate_y );
 	}
@@ -253,6 +264,8 @@ bool move_player( int coordinate_x, int coordinate_y )
 // The start of main().
 int main()
 {
+	array = malloc( 2 * WIDTH * HEIGHT * sizeof( char ) );
+
 	char level[666];
 
 	for( int i=0; i<66; i++)
@@ -280,6 +293,7 @@ int main()
 		{
 			case 'Q':
 			case 'q':
+				free(array);
 				exit( 3 );
 			case 'W':	
 			case 'w':
