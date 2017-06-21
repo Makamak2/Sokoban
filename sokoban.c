@@ -1,5 +1,5 @@
 // Macros used for debugging
-#define DEBUG_BUILD 0 // Change to 0 to not debug, to a different number to do a debug build
+#define DEBUG_BUILD 1 // Change to 0 to not debug, to a different number to do a debug build
 #define DEBUG if( DEBUG_BUILD )
 // End of debug macros
 
@@ -11,11 +11,6 @@
 #include <string.h> // Using for the strcat() function
 #include "stack.h"
 // End of inclusion
-
-// Changeable definition of the height and the width of the board ( is used as parameters when declaring the array )
-#define WIDTH 14
-#define HEIGHT 10
-// End of definitions.
 
 // Definition of characters for tiles.
 #define WALL 'O'
@@ -31,6 +26,11 @@ char* array;
 int col_player;
 int row_player;
 // The end of the declaration.
+
+// The declaration of variables used to determine the WIDTH and HEIGHT of the board
+int WIDTH = 0;
+int HEIGHT = 0;
+// End of declarations.
 
 /*
 // Defining functions from header "stack.h"
@@ -56,43 +56,34 @@ int count_chars_in_level( char directory[66] )
 	FILE *file;
 	file = fopen( directory, "r" );
 
-	int amount_of_chars = 0;
 	char character = 0;
-	
-	for( int i=0; i<2; i++ )
-	{
-		while( fgetc(file) != ' ' /* Until the cursor reaches the empty line */ )
+	WIDTH = 0;
+	HEIGHT = 0;
+
+
+		while( (character = fgetc(file)) != ' ' /* Until the cursor reaches the empty line */ )
 		{
+
 			if(character == '\n')
 			{
+				HEIGHT++;
 				continue;
 			}
-			amount_of_chars++;       
+         else WIDTH++;     
 		}
-		
-		if( i == 0 )
-		{
-			DEBUG
+      WIDTH = WIDTH / HEIGHT;
+
+		DEBUG
 			{
 				system( "printf \"\033c\"" );
 				printf("\nThis is a DEBUG build!\n\n");
-				printf("\nSuccesfully counted first layer of a level.\n\n");
+				printf("HEIGHT = %d, WIDTH = %d\n", HEIGHT, WIDTH);
 				usleep( 1500000 );
-			}		
-		}
-		else
-		{
-			DEBUG
-			{
-				system( "printf \"\033c\"" );
-				printf("\nThis is a DEBUG build!\n\n");
-				printf("\nSuccesfully counted second layer of a level.\n\n");
-				usleep( 1500000 );
-			}
-		}	
-	}	
+			}	
 	
-	return amount_of_chars;
+	
+	fclose( file );
+	return 2 * WIDTH * HEIGHT;
 }
 // The end of function 'count_chars_in_level()'.
 
@@ -110,65 +101,62 @@ void prepare_level( char level )
 		printf("ERROR: That is not an existing level\n");
 		free( array );
 		exit( 1 );
+	}	
+	array = realloc( array , count_chars_in_level( level_directory ) );
+	
+	if( array == NULL )
+	{
+		system( "printf \"\033c\"" );
+		printf("\nERROR: Failed to reallocate.\n\n");
+		free( array );
+		exit( 2 );
 	}
 	else
-	{	
-		array = realloc( array , count_chars_in_level( level_directory ) );
-		
-		if( array == NULL )
+	{
+		DEBUG
 		{
 			system( "printf \"\033c\"" );
-			printf("\nERROR: Failed to reallocate.\n\n");
-			free( array );
-			exit( 2 );
-		}
-		else
-		{
-			DEBUG
-			{
-				system( "printf \"\033c\"" );
-				printf("\nThis is a DEBUG build!\n\n");
-				printf("\nSuccesfully reallocated.\n\n");
-				usleep( 1500000 );
-			}	
-		}
-
-		FILE *file;
-		file = fopen( level_directory, "r" );
-		
-		int col = 0;
-		int row = 0;
-		char character = 0;
-
-		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
-		{
-			if(character == '\n')
-			{
-				col=0;
-				row++;
-				continue;
-			}
-			*( array + offset(col, row, 0) ) = character;
-			col++;         
-		}
-
-		col = 0;
-		row = 0;
-		character = fgetc(file);
-
-		while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
-		{
-			if(character == '\n')
-			{
-				col=0;
-				row++;
-				continue;
-			}
-			*( array + offset(col, row, 1) ) = character;
-			col++;         
-		}		
-		fclose( file );
+			printf("\nThis is a DEBUG build!\n\n");
+			printf("\nSuccesfully reallocated.\n\n");
+			usleep( 1500000 );
+		}	
 	}
+
+	FILE *file;
+	file = fopen( level_directory, "r" );
+	
+	int col = 0;
+	int row = 0;
+	char character = 0;
+
+	while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
+	{
+		if(character == '\n')
+		{
+			col=0;
+			row++;
+			continue;
+		}
+		*( array + offset(col, row, 0) ) = character;
+		col++;         
+	}
+
+	col = 0;
+	row = 0;
+	character = fgetc(file);
+
+	while( ( character = fgetc(file) ) != ' ' /* Until the cursor reaches the empty line */ )
+	{
+		if(character == '\n')
+		{
+			col=0;
+			row++;
+			continue;
+		}
+		*( array + offset(col, row, 1) ) = character;
+		col++;         
+	}		
+	fclose( file );
 	
 	DEBUG 
 	{
@@ -186,6 +174,8 @@ void print_board()
  system( "printf \"\033c\"" );	 // a cheat to clear the console
 	
 	DEBUG printf("\nThis is a DEBUG build!\n\n");
+
+	DEBUG printf("HEIGHT = %d, WIDTH = %d\n", HEIGHT, WIDTH);
 
 	for( int row = 0; row < HEIGHT; row++ )
 	{
