@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <stdbool.h> // For the usage of boolean data type.
 #include <unistd.h> // Using for the usleep command
+#include <string.h> // Using for the strcat() function
 #include "stack.h"
 // End of inclusion
 
 // Changeable definition of the height and the width of the board ( is used as parameters when declaring the array )
-#define WIDTH 20
-#define HEIGHT 20
+#define WIDTH 14
+#define HEIGHT 10
 // End of definitions.
 
 // Definition of characters for tiles.
@@ -47,30 +48,90 @@ int offset( int coordinate_x, int coordinate_y, int layer )
 {
 	return ( layer * WIDTH * HEIGHT + coordinate_y * WIDTH + coordinate_x);
 }
-//
+// The end of function 'offset()'
+
+// The start of function 'count_chars_in_level()', which counts and returns the amount of characters in a file where a level layout is saved, which is used to realloc the right amount of memory for the "array" we use for the characters of the board.
+int count_chars_in_level( char directory[66] )
+{
+	FILE *file;
+	file = fopen( directory, "r" );
+
+	int amount_of_chars = 0;
+	char character = 0;
+	
+	for( int i=0; i<2; i++ )
+	{
+		while( fgetc(file) != ' ' /* Until the cursor reaches the empty line */ )
+		{
+			if(character == '\n')
+			{
+				continue;
+			}
+			amount_of_chars++;       
+		}
+		
+		if( i == 0 )
+		{
+			DEBUG
+			{
+				system( "printf \"\033c\"" );
+				printf("\nThis is a DEBUG build!\n\n");
+				printf("\nSuccesfully counted first layer of a level.\n\n");
+				usleep( 1500000 );
+			}		
+		}
+		else
+		{
+			DEBUG
+			{
+				system( "printf \"\033c\"" );
+				printf("\nThis is a DEBUG build!\n\n");
+				printf("\nSuccesfully counted second layer of a level.\n\n");
+				usleep( 1500000 );
+			}
+		}	
+	}	
+	
+	return amount_of_chars;
+}
+// The end of function 'count_chars_in_level()'.
 
 // The start of function 'prepare_level()', which sets the elements in the array to walls, goals, boxes and the player according to the text file determined by user input in 'main()'.
-void prepare_level( char level[666] )
+void prepare_level( char level )
 {
-	
+		
 	char level_directory[66] = "./levels/";
-
-	int toot = 0;
-
-	while( level[toot] != 0 )
-	{
-		level_directory[toot+9] = level[toot];
-		toot++;
-	}
+	char buffer[20];
+	sprintf( buffer, "%d", level );
+	strcat( level_directory, buffer );
 
 	if(fopen( level_directory, "r" ) == NULL)
 	{
 		printf("ERROR: That is not an existing level\n");
-		free(array);
-		exit(1);
+		free( array );
+		exit( 1 );
 	}
 	else
 	{	
+		array = realloc( array , count_chars_in_level( level_directory ) );
+		
+		if( array == NULL )
+		{
+			system( "printf \"\033c\"" );
+			printf("\nERROR: Failed to reallocate.\n\n");
+			free( array );
+			exit( 2 );
+		}
+		else
+		{
+			DEBUG
+			{
+				system( "printf \"\033c\"" );
+				printf("\nThis is a DEBUG build!\n\n");
+				printf("\nSuccesfully reallocated.\n\n");
+				usleep( 1500000 );
+			}	
+		}
 
 		FILE *file;
 		file = fopen( level_directory, "r" );
@@ -126,9 +187,9 @@ void print_board()
 	
 	DEBUG printf("\nThis is a DEBUG build!\n\n");
 
-	for( int row = 0; row < WIDTH; row++ )
+	for( int row = 0; row < HEIGHT; row++ )
 	{
-   	for( int col = 0; col < HEIGHT; col++ )
+   	for( int col = 0; col < WIDTH; col++ )
       {
       	if( col == col_player && row == row_player ) printf("%c", PLAYER);
       	else if( *(array + offset(col, row, 1) ) != '0' )
@@ -155,9 +216,9 @@ void check_goals()
 	int goals = 3;
 	int on_goal = 0;
 
-	for( int row = 0; row < WIDTH; row++ )
+	for( int row = 0; row < HEIGHT; row++ )
 	{
-   	for( int col = 0; col < HEIGHT; col++ )
+   	for( int col = 0; col < WIDTH; col++ )
       {
 			if( *(array + offset(col, row, 0)) == GOAL && *(array + offset(col, row, 1)) == BOX )
 			{
@@ -223,9 +284,9 @@ bool box_movement( int coordinate_x, int coordinate_y )
 	}
 	
 	system( "printf \"\033c\"" );
-	printf("\nERROR\n");
+	printf("\nERROR: Problem with moving boxes\n");
 	free(array);
-	exit( 1 );
+	exit( 2 );
 }
 // End of function 'box_movement'.
 
@@ -264,16 +325,16 @@ bool move_player( int coordinate_x, int coordinate_y )
 // The start of main().
 int main()
 {
-	array = malloc( 2 * WIDTH * HEIGHT * sizeof( char ) );
+	array = malloc( 1 );
 
-	char level[666];
+	int level;
 
-	for( int i=0; i<66; i++)
+/*	for( int i=0; i<666; i++)
 	{
 		level[i] = 0;
 	}
-
-	scanf("%s", level);
+*/
+	scanf("%d", &level);
 
 	prepare_level( level );
 
